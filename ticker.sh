@@ -4,7 +4,19 @@ set -e
 LANG=C
 LC_NUMERIC=C
 
-SYMBOLS=("$@")
+SYMBOLS=()
+CONDITIONS=()
+
+for arg in "$@"; do
+  # split on @ to look for optional conditions to evaluate
+  IFS=$'\n' read -d '' -ra items <<< "${arg//@/$'\n'}" || :
+  SYMBOLS+=("${items[0]}")
+  if [ "${#items[@]}" -gt 1 ]; then
+    CONDITIONS+=("echo \"${items[1]}\" | bc -l")
+  else
+    CONDITIONS+=('')
+  fi
+done
 
 if ! $(type jq > /dev/null 2>&1); then
   echo "'jq' is not in the PATH. (See: https://stedolan.github.io/jq/)"
@@ -37,7 +49,9 @@ query () {
   echo $results | jq -r ".[] | select(.symbol == \"$1\") | .$2"
 }
 
-for symbol in $(IFS=' '; echo "${SYMBOLS[*]}" | tr '[:lower:]' '[:upper:]'); do
+for i in "${!SYMBOLS[@]}"; do
+  symbol=$(IFS=' '; echo "${SYMBOLS[i]}" | tr '[:lower:]' '[:upper:]')
+  condition=${CONDITIONS[i]}
   marketState="$(query $symbol 'marketState')"
 
   if [ -z $marketState ]; then
@@ -78,6 +92,12 @@ for symbol in $(IFS=' '; echo "${SYMBOLS[*]}" | tr '[:lower:]' '[:upper:]'); do
   fi
 
   if [ "$price" != "null" ]; then
+    if [ -n "$condition" ]; then
+      if ! (( $(eval "$condition") )); then
+        continue
+      fi
+    fi
+
     printf "%-10s$COLOR_BOLD%8.2f$COLOR_RESET" $symbol $price
     printf "$color%10.2f%12s$COLOR_RESET" $diff $(printf "(%.2f%%)" $percent)
     printf " %s\n" "$nonRegularMarketSign"
