@@ -23,6 +23,9 @@ $ ./ticker.sh AAPL
 # Multiple symbols:
 $ ./ticker.sh AAPL MSFT GOOG BTC-USD
 
+# Conditional reporting:
+$ ./ticker.sh AAPL MSFT GOOG BTC-USD@'$price < 100'
+
 # Read from file:
 $ echo "AAPL MSFT GOOG BTC-USD" > ~/.ticker.conf
 $ ./ticker.sh $(cat ~/.ticker.conf)
@@ -47,4 +50,10 @@ This script works well with [GeekTool](https://www.tynsoe.org/geektool/) and sim
 ```sh
 PATH=/usr/local/bin:$PATH # make sure to include the path where jq is located
 ~/GitHub/ticker.sh/ticker.sh AAPL MSFT GOOG BTC-USD
+```
+
+Use of the companion `notify.sh` script, conditional reporting, and your favorite scheduler (cron, launchd, systemd, etc.), can invoke a desktop notification app:
+
+```sh
+$ ./notify.sh 'zenity --notification --text="$results"' BTC-USD@'$price > 1000'
 ```
