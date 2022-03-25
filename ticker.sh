@@ -24,7 +24,7 @@ if ! $(type jq > /dev/null 2>&1); then
 fi
 
 if [ -z "$SYMBOLS" ]; then
-  echo "Usage: ./ticker.sh AAPL MSFT GOOG BTC-USD"
+  echo "Usage: ./ticker.sh AAPL MSFT GOOG BTC-USD@'\$price > 1000'"
   exit
 fi
 
@@ -92,10 +92,8 @@ for i in "${!SYMBOLS[@]}"; do
   fi
 
   if [ "$price" != "null" ]; then
-    if [ -n "$condition" ]; then
-      if ! (( $(eval "$condition") )); then
-        continue
-      fi
+    if [ -n "$condition" ] && ! (( $(eval "$condition") )); then
+      continue
     fi
 
     printf "%-10s$COLOR_BOLD%8.2f$COLOR_RESET" $symbol $price
