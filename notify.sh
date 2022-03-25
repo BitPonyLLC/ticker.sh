@@ -10,9 +10,6 @@ if [ -z "$NOTIFIER" ] || [ $# -lt 1 ]; then
 fi
 
 results=$(NO_COLOR=1 "${SCRIPT_DIR}/ticker.sh" "$@")
-if [ -z "$results" ]; then
-  exit
+if [ -n "$results" ]; then
+  eval "$NOTIFIER"
 fi
-
-eval "$NOTIFIER"
-
